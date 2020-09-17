@@ -1,0 +1,4 @@
+{
+	"target":	"cortex-m3",
+	"prefix":	"{{gcc-prefix}}/cm3"
+}
