@@ -1,0 +1,40 @@
+{
+	"binutils": [
+		{
+			"version":	"2.28",
+			"sha384":	"86a88c5acedd200069080396c9f1c256767ea5e8841f2e4f5ba64ef2ff688f3fc5d4a26a2f0e1818df67cef325e25d9e",
+			"uri":		"http://ftp.gnu.org/gnu/binutils/binutils-{{version}}.tar.gz"
+		},
+		{
+			"version":	"2.35",
+			"sha384":	"b7a8ada3dfe767ab8e018b0b1f79096392754e2cdf95b14b1f598f55ea845c8eb1144b56e81444b545d1b8374a5f7458",
+			"uri":		"http://ftp.gnu.org/gnu/binutils/binutils-{{version}}.tar.gz"
+		}
+	],
+	"gcc": [
+		{
+			"version":	"7.3.0",
+			"sha384":	"45a9b93603af5d0a190b1fac6f0f4beabbc6828eec129db26717847ce39779c2e7afb47397c9863eced9cb12183216df",
+			"uri":		"http://ftp.gnu.org/gnu/gcc/gcc-{{version}}/gcc-{{version}}.tar.gz"
+		},
+		{
+			"version":	"10.2.0",
+			"sha384":	"2f83736d852684a5389389b31e33bed33803be85db616b3a31aa31f7297787cd7e4871d03f10a6828b59d8cf7c193f73",
+			"uri":		"http://ftp.gnu.org/gnu/gcc/gcc-{{version}}/gcc-{{version}}.tar.gz"
+		}
+	],
+	"newlib": [
+		{
+			"version":	"2.5.0",
+			"sha384":	"241791408cbad2f8ba7e5a7b7e148bb4229ceb70ab400aa2ec590fb2711fd74b7418ea62da9a35cb08c03c4dea1437aa",
+			"uri":		"ftp://sourceware.org/pub/newlib/newlib-{{version}}.tar.gz"
+		}
+	],
+	"gdb": [
+		{
+			"version":	"7.12.1",
+			"sha384":	"659999a18cab033e4737b32ef55539a119442583ba5b32588b39a7c0c197b2284ba18adb5bd2fd138e40d755d999fdca",
+			"uri":		"http://ftp.gnu.org/gnu/gdb/gdb-{{version}}.tar.gz"
+		}
+	]
+}
