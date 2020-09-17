@@ -1,4 +1,5 @@
 {
-	"target":	"cortex-m3",
-	"prefix":	"{{gcc-prefix}}/cm3"
+	"target":			"cortex-m3",
+	"prefix":			"{{gcc-prefix}}/cm3",
+	"default-targets":	[ "binutils", "gcc/prebuild", "newlib", "gcc", "gdb" ]
 }

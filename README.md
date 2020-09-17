@@ -74,8 +74,13 @@ or
 $ ./etcbuild -e env_joe.json -e env_cortex_m3.json binutils gcc gdb
 ```
 
+Package names have the following form: `pkgname-version/flag1,flag2,...`. I.e.,
+`gcc` is a valid flag, but `gcc-1.2.3` as well and `gcc-1.2.3/foo,bar,c++` one
+that specifies a version and flags.
+
 ## Targets
 Currently recognized targets are:
+
   * cortex-m0
   * cortex-m1
   * cortex-m3

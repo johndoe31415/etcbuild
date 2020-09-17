@@ -35,20 +35,23 @@ parser = FriendlyArgumentParser(description = "Embedded toolchain build script."
 parser.add_argument("-e", "--envfile", metavar = "filename", action = "append", default = [ ], help = "Specifies an environment file; can be specified multiple times (order matters, later options supersede previous ones). Set of JSON files which define build environment parameters such as the target or installation directory.")
 parser.add_argument("-p", "--packages", metavar = "filename", default = "packages.json", help = "Specifies package configuration file. Defaults to %(default)s.")
 parser.add_argument("-d", "--package-dir", metavar = "dirname", default = "packages", help = "Specifies subdirectory in which to store downloaded package sources. Defaults to %(default)s.")
-parser.add_argument("--concurrency", metavar = "processes", type = int, default = multiprocessing.cpu_count(), help = "Specifies number of concurrent processes to use. Defaults to %(default)d.")
+parser.add_argument("--concurrency", metavar = "processes", type = int, default = multiprocessing.cpu_count(), help = "Specifies number of concurrent processes to use. Defaults to number of CPUs in the system (%(default)d on this machine).")
 parser.add_argument("--disable-verification", action = "store_true", help = "Disables verification of hashes of downloaded files. Not recommended.")
 parser.add_argument("--no-cleanup", action = "store_true", help = "By default, temporary files during the build process are removed after the build is finished. This option keeps them around.")
 parser.add_argument("--no-install", action = "store_true", help = "Just build the packages, but do not install them.")
 parser.add_argument("-v", "--verbose", action = "count", default = 0, help = "Increases verbosity. Can be specified multiple times to increase.")
-parser.add_argument("target", metavar = "target", type = str, nargs = "+", help = "Target(s) to build.")
+parser.add_argument("target", metavar = "target", type = str, nargs = "*", help = "Target(s) to build. Can be omitted if the enviroment contains a 'default-targets' list.")
 args = parser.parse_args(sys.argv[1:])
 
 class Builder():
-	_SUBSITUTION = re.compile("{{(?P<name>[-0-9a-zA-Z]+)}}")
+	_SUBSITUTION_RE = re.compile("{{(?P<name>[-0-9a-zA-Z]+)}}")
+	_TARGET_NAME_RE = re.compile("(?P<pkgname>[a-zA-Z0-9]+)(-(?P<version>[.a-zA-Z0-9]+))?(/(?P<flags>[,a-zA-Z]+))?")
 
 	def __init__(self, args):
 		self._args = args
 		self._environment = self._get_environment()
+		if "prefix" not in self._environment:
+			self._environment["prefix"] = "/usr/local"
 		self._pkgs = PackageManager(package_definition_filename = self._args.packages, package_directory = self._args.package_dir)
 		self._environment["prefix"] = os.path.realpath(os.path.expanduser(self._environment["prefix"]))
 		with contextlib.suppress(FileExistsError):
@@ -74,11 +77,15 @@ class Builder():
 		for i in range(100):
 			new_environment = { }
 			substituted = False
+
 			for (key, value) in environment.items():
-				new_value = self._SUBSITUTION.sub(_replacer, value)
-				new_environment[key] = new_value
-				if new_value != value:
-					substituted = True
+				if isinstance(value, str):
+					new_value = self._SUBSITUTION_RE.sub(_replacer, value)
+					new_environment[key] = new_value
+					if new_value != value:
+						substituted = True
+				else:
+					new_environment[key] = value
 			if not substituted:
 				break
 			environment = new_environment
@@ -86,11 +93,18 @@ class Builder():
 			raise Exception("Probably recursive environment variables, giving up after too deep recursion.")
 		return environment
 
-	def build_target(self, target):
-		pkg = self._pkgs.get(target)
+	def build_target(self, target_name):
+		match = self._TARGET_NAME_RE.fullmatch(target_name)
+		if match is None:
+			raise Exception("Invalid target name: %s" % (target_name))
+		match = match.groupdict()
+
+		pkg = self._pkgs.get(match["pkgname"], version = match["version"])
+		flags = set() if (match["flags"] is None) else set(match["flags"].split(","))
+
 		print("Downloading: %s-%s" % (pkg["pkgname"], pkg["version"]))
 		self._pkgs.retrieve(pkg, verify = self._args.disable_verification)
-		with self._builder_factory.get_builder(pkg) as builder:
+		with self._builder_factory.get_builder(pkg, flags) as builder:
 			print("Unpacking: %s-%s to %s" % (pkg["pkgname"], pkg["version"], builder.builddir))
 			builder.unpack()
 			print("Building: %s-%s" % (pkg["pkgname"], pkg["version"]))
@@ -100,8 +114,15 @@ class Builder():
 				builder.install()
 
 	def run(self):
-		for target in self._args.target:
-			self.build_target(target)
+		if len(self._args.target) == 0:
+			if "default-targets" not in self._environment:
+				raise Exception("Error: no targets specified on command line and environment does not contain 'default-targets' list.")
+			targets = self._environment["default-targets"]
+		else:
+			targets = self._args.target
+
+		for target_name in targets:
+			self.build_target(target_name)
 
 builder = Builder(args)
 builder.run()
